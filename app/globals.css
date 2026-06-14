@@ -274,3 +274,9 @@ body {
 /* SCROLLBAR HIDDEN */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* SPIN ANIMATION FOR LOADING INDICATORS */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
