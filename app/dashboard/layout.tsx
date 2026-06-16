@@ -5,34 +5,61 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
   Zap, TrendingUp, Users, BarChart2, Clock,
-  MessageCircle, Settings, ChevronDown,
+  MessageCircle, Settings, ChevronDown, Target
 } from 'lucide-react'
 import ClarioLogo from '@/components/ClarioLogo'
 import ThemeToggle from '@/components/ThemeToggle'
-
-const navItems = [
-  { href: '/dashboard', label: 'Today', icon: Zap },
-  { href: '/dashboard/intelligence', label: 'Intelligence', icon: TrendingUp },
-  { href: '/dashboard/pipeline', label: 'Pipeline', icon: Users },
-  { href: '/dashboard/revenue', label: 'Revenue', icon: BarChart2 },
-  { href: '/dashboard/timeline', label: 'Timeline', icon: Clock },
-  { href: '/dashboard/axo', label: 'Axo', icon: MessageCircle },
-]
-
-/* Page title lookup based on pathname */
-function getPageTitle(pathname: string): string {
-  if (pathname === '/dashboard' || pathname === '/dashboard/') return 'Today'
-  const match = navItems.find(
-    (item) => item.href !== '/dashboard' && pathname.startsWith(item.href)
-  )
-  if (match) return match.label
-  if (pathname.startsWith('/dashboard/settings')) return 'Settings'
-  return 'Dashboard'
-}
+import { WorkspaceProvider, useWorkspace } from '@/context/WorkspaceContext'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <WorkspaceProvider>
+      <DashboardShell>{children}</DashboardShell>
+    </WorkspaceProvider>
+  )
+}
+
+function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const pageTitle = getPageTitle(pathname)
+  const { workspace, businessProfile, user, loading } = useWorkspace()
+
+  const isAgency = businessProfile?.business_type !== 'ecommerce'
+
+  const navItems = isAgency
+    ? [
+        { href: '/dashboard', label: 'Today', icon: Zap },
+        { href: '/dashboard/intelligence', label: 'Intelligence', icon: TrendingUp },
+        { href: '/dashboard/pipeline', label: 'Pipeline', icon: Users },
+        { href: '/dashboard/revenue', label: 'Revenue', icon: BarChart2 },
+        { href: '/dashboard/timeline', label: 'Timeline', icon: Clock },
+        { href: '/dashboard/axo', label: 'Axo', icon: MessageCircle },
+      ]
+    : [
+        { href: '/dashboard', label: 'Today', icon: Zap },
+        { href: '/dashboard/intelligence', label: 'Intelligence', icon: TrendingUp },
+        { href: '/dashboard/acquisition', label: 'Acquisition', icon: Target },
+        { href: '/dashboard/revenue', label: 'Revenue', icon: BarChart2 },
+        { href: '/dashboard/timeline', label: 'Timeline', icon: Clock },
+        { href: '/dashboard/axo', label: 'Axo', icon: MessageCircle },
+      ]
+
+  const pageTitles: Record<string, string> = {
+    '/dashboard': 'Today',
+    '/dashboard/intelligence': 'Intelligence',
+    '/dashboard/pipeline': 'Pipeline',
+    '/dashboard/acquisition': 'Acquisition',
+    '/dashboard/revenue': 'Revenue',
+    '/dashboard/timeline': 'Timeline',
+    '/dashboard/axo': 'Axo',
+  }
+  const pageTitle = pathname.startsWith('/dashboard/settings') ? 'Settings' : (pageTitles[pathname] || 'Today')
+
+  const getInitials = (name?: string) => {
+    if (!name) return '?'
+    const parts = name.trim().split(/\s+/)
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase()
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+  }
 
   return (
     <div className="page-bg flex" style={{ minHeight: '100vh' }}>
@@ -112,7 +139,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             Settings
           </Link>
 
-          {/* USER ROW PLACEHOLDER */}
+          {/* USER ROW */}
           <div
             style={{
               display: 'flex',
@@ -136,9 +163,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 fontWeight: 600,
                 color: '#374151',
                 flexShrink: 0,
+                overflow: 'hidden',
               }}
             >
-              TM
+              {user?.avatar_url ? (
+                <img src={user.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                getInitials(user?.full_name)
+              )}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div
@@ -151,7 +183,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   textOverflow: 'ellipsis',
                 }}
               >
-                Thomas Mercier
+                {user?.full_name || 'Loading...'}
               </div>
               <div
                 style={{
@@ -162,7 +194,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   textOverflow: 'ellipsis',
                 }}
               >
-                thomas@clario.co
+                {user?.email || ''}
               </div>
             </div>
             <ChevronDown size={16} color="#9CA3AF" />
