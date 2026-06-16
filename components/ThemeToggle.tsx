@@ -5,18 +5,22 @@ import { Sun, Moon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 
-export default function ThemeToggle() {
+interface ThemeToggleProps {
+  forceDark?: boolean
+}
+
+export default function ThemeToggle({ forceDark = false }: ThemeToggleProps) {
   const [mounted, setMounted] = useState(false)
   const { resolvedTheme, setTheme } = useTheme()
   useEffect(() => setMounted(true), [])
 
   if (!mounted) return <div style={{ width: 36, height: 36 }} />
 
-  const isDark = resolvedTheme === 'dark'
+  const isDark = forceDark ? true : resolvedTheme === 'dark'
 
   return (
     <motion.button
-      onClick={() => setTheme(isDark ? 'light' : 'dark')}
+      onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
       whileTap={{ scale: 0.92 }}
       style={{
         width: 36,
@@ -28,11 +32,11 @@ export default function ThemeToggle() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: '#6B7280',
+        color: isDark ? '#9CA3AF' : '#6B7280',
       }}
       aria-label="Toggle theme"
     >
-      {isDark ? <Sun size={16} /> : <Moon size={16} />}
+      {resolvedTheme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
     </motion.button>
   )
 }
